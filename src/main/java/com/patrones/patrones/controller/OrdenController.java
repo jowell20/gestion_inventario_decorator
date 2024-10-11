@@ -71,4 +71,8 @@ public class OrdenController {
         }
     }
 
+    @GetMapping("/Estado/{estado}")
+    public List<OrdenCompra> filtrarOrdenesPorEstado(@PathVariable String estado) {
+        return ordenService.filtrarOrdenesPorEstado(estado);
+    }
 }

@@ -37,4 +37,7 @@ public class OrdenCompra {
     @JsonIgnore
     private List<DetalleOrdenCompra> detalleOrdenCompras;
 
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 }
