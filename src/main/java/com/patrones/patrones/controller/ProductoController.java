@@ -1,6 +1,9 @@
 package com.patrones.patrones.controller;
 
 import com.patrones.patrones.model.Producto;
+import com.patrones.patrones.service.IProductoService;
+import com.patrones.patrones.service.ProductoConNotificacionDecorator;
+import com.patrones.patrones.service.ProductoConValidacionPrecioDecorator;
 import com.patrones.patrones.service.ProductoService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,73 +17,75 @@ import java.util.List;
 @RequestMapping("/api/productos")
 public class ProductoController {
 
-    @Autowired
-    private ProductoService productoService;
 
+   private final IProductoService productoServiceDecorado;
+
+    @Autowired
+    private IProductoService productoService;
+
+    // Al inicializar el servicio, lo envuelves con el decorador de validación
+    @Autowired
+    public ProductoController(IProductoService productoService) {
+        this.productoServiceDecorado = new ProductoConNotificacionDecorator(
+                new ProductoConValidacionPrecioDecorator(productoService)
+        );
+    }
 
     @PostMapping("/crear")
     public ResponseEntity<Producto> crearProducto(@RequestBody Producto nuevoProducto) {
         try {
-            Producto productoGuardado = productoService.guardarProducto(nuevoProducto);
+            Producto productoGuardado = productoServiceDecorado.guardarProducto(nuevoProducto);
             return ResponseEntity.ok(productoGuardado);
         } catch (IllegalArgumentException e) {
-            // Manejo de errores específico (puedes ajustar según tus necesidades)
             return ResponseEntity.badRequest().body(null); // 400 Bad Request
         } catch (Exception e) {
-            // Manejo de errores genérico
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // 500 Internal Server Error
         }
     }
 
-
     @PutMapping("/{id}")
     public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id, @RequestBody Producto productoActualizado) {
         try {
-            Producto producto = productoService.actualizarProducto(id, productoActualizado);
+            Producto producto = productoServiceDecorado.actualizarProducto(id, productoActualizado);
             return ResponseEntity.ok(producto);
         } catch (EntityNotFoundException e) {
-            // Si el producto no se encuentra, responde con 404 (Not Found)
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // 404 Not Found
         } catch (Exception e) {
-            // Para cualquier otro error, responde con 500 (Internal Server Error)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 Internal Server Error
         }
     }
 
     @GetMapping
     public ResponseEntity<List<Producto>> listarTodosLosProductos() {
-        List<Producto> productos = productoService.listarProductos();
+        List<Producto> productos = productoServiceDecorado.obtenerProductos();
         if (productos.isEmpty()) {
-            // Si no hay productos, retorna 204 No Content
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.noContent().build(); // 204 No Content
         } else {
-            // Si hay productos, retorna 200 OK con la lista de productos
-            return ResponseEntity.ok(productos);
+            return ResponseEntity.ok(productos); // 200 OK
         }
     }
 
-    // Método para obtener un producto por su ID
     @GetMapping("/{id}")
     public ResponseEntity<Producto> obtenerProductoPorId(@PathVariable Long id) {
         try {
-            Producto producto = productoService.obtenerProductoPorId(id);
-            return ResponseEntity.ok(producto); // Retorna 200 OK con el producto encontrado
+            Producto producto = productoServiceDecorado.obtenerProductoPorId(id);
+            return ResponseEntity.ok(producto); // 200 OK
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // Retorna 404 si no se encuentra el producto
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // 404 Not Found
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Manejo de otras excepciones
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // 500 Internal Server Error
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         try {
-            productoService.eliminarProducto(id);
-            return ResponseEntity.noContent().build(); // Retorna 204 si se eliminó correctamente
+            productoServiceDecorado.eliminarProducto(id);
+            return ResponseEntity.noContent().build(); // 204 No Content
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Retorna 404 si el producto no se encuentra
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // 404 Not Found
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Manejo de otras excepciones
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 Internal Server Error
         }
     }
 }

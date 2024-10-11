@@ -3,14 +3,12 @@ package com.patrones.patrones.service;
 import com.patrones.patrones.model.Categoria;
 import com.patrones.patrones.model.Producto;
 
-
+import  com.patrones.patrones.model.Producto;
 import com.patrones.patrones.model.Proveedor;
 import com.patrones.patrones.repository.CategoriaRepository;
 import com.patrones.patrones.repository.ProductoRepository;
 import com.patrones.patrones.repository.ProveedorRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,14 +16,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ProductoService {
+public class ProductoService implements IProductoService{
    @Autowired
+
     private ProductoRepository productoRepository;
    @Autowired
     private ProveedorRepository proveedorRepository;
    @Autowired
     private CategoriaRepository categoriaRepository;
 
+   @Override
     public Producto guardarProducto(Producto producto) {
         Long idProveedor = producto.getProveedor().getId();
         Long idCategoria = producto.getCategoria().getId();
@@ -42,9 +42,10 @@ public class ProductoService {
         }
     }
 
+    @Override
     public List<Producto> obtenerProductos() {
-        return productoRepository.findAll();
-    }
+    return productoRepository.findAll();
+   }
 
    /* public Producto guardarProducto(Producto producto) {
         // Verifica que los IDs de proveedor y categoría existan
@@ -64,10 +65,8 @@ public class ProductoService {
         return productoRepository.save(producto);
     }*/
 
-    public List<Producto> listarProductos() {
-        return productoRepository.findAll(); // Método para listar todos los productos.
-    }
 
+    @Override
     public Producto actualizarProducto(Long id, Producto productoActualizado) {
         System.out.println("Nombre del producto actualizado a: " );
         Optional<Producto> optProducto = productoRepository.findById(id);
@@ -107,12 +106,13 @@ public class ProductoService {
         }
     }
 
+    @Override
     public Producto obtenerProductoPorId(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con id: " + id));
     }
 
-
+    @Override
     public void eliminarProducto(Long id) {
         Optional<Producto> optProducto = productoRepository.findById(id);
 
